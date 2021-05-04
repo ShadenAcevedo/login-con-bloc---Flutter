@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 
+import 'package:image_picker/image_picker.dart';
+import 'package:form_validation/bloc/provider.dart';
 import 'package:form_validation/models/product_model.dart';
-import 'package:form_validation/providers/products_provider.dart';
 import 'package:form_validation/utils/utils.dart' as utils;
 
 class ProductPage extends StatefulWidget {
@@ -17,7 +17,8 @@ class _ProductPageState extends State<ProductPage> {
 
   final formKey = GlobalKey<FormState>();
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  final productoProvider = ProductProvider();
+
+  ProductsBloc? productsBloc;
   ProductModel producto = ProductModel();
   bool _guardando = false;
   File ?foto;
@@ -25,7 +26,7 @@ class _ProductPageState extends State<ProductPage> {
   @override
   Widget build(BuildContext context) {
 
-
+    productsBloc = Provider.productsBloc(context);
     final ProductModel? prodData = ModalRoute.of(context)?.settings.arguments as ProductModel?;
     if(prodData != null){
       producto = prodData;
@@ -138,28 +139,25 @@ class _ProductPageState extends State<ProductPage> {
     setState(() => _guardando = true );
 
     if(foto != null){
-      producto.fotoUrl = await productoProvider.subirImagen(foto!);
+      producto.fotoUrl = await productsBloc!.subirFoto(foto!);
     }
 
     if( producto.id == '' ){
-      productoProvider.crearProducto(producto);
+      productsBloc!.agregarProducto(producto);
     } else {
-      productoProvider.editarProducto(producto);
+      productsBloc!.editarProducto(producto);
     }
-    //setState(() => _guardando = false );
-    mostrarSnackbar('Registro Guardado');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Registro Guardado'),
+      ),
+    );
+
 
     Navigator.pop(context);
   }
 
-  void mostrarSnackbar(String mensaje){
-    final snackbar = SnackBar(
-      content: Text(mensaje),
-      duration: Duration(milliseconds: 1500),
-    );
-
-    scaffoldKey.currentState?.showSnackBar(snackbar);
-  }
 
   Widget _mostrarFoto(){
     if(producto.fotoUrl != ''){

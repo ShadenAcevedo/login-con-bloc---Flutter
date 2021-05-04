@@ -1,18 +1,20 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:form_validation/user_preferences/user_preferences.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:http/http.dart' as http;
 import 'package:form_validation/models/product_model.dart';
 
-class ProductProvider {
+class ProductsProvider {
 
   final String _url = 'https://todo-flutter-61e50-default-rtdb.firebaseio.com';
+  final _prefs = UserPreferences();
 
   Future<bool> crearProducto(ProductModel producto) async{
 
-    final url = '$_url/productos.json';
+    final url = '$_url/productos.json?auth=${_prefs.token}';
     final resp = await http.post(Uri.parse(url), body: productModelToJson(producto));
     final decodedData = json.decode(resp.body);
     print('creado' + decodedData.toString());
@@ -21,7 +23,7 @@ class ProductProvider {
 
   Future<bool> editarProducto(ProductModel producto) async{
 
-    final url = '$_url/productos/${producto.id}.json';
+    final url = '$_url/productos/${producto.id}.json?auth=${_prefs.token}';
     final resp = await http.put(Uri.parse(url), body: productModelToJson(producto));
     final decodedData = json.decode(resp.body);
     print('editado' + decodedData.toString());
@@ -30,25 +32,26 @@ class ProductProvider {
 
   Future<List<ProductModel>> cargarProductos() async {
 
-    final url = '$_url/productos.json';
+    final url = '$_url/productos.json?auth=${_prefs.token}';
     final resp = await http.get(Uri.parse(url));
-    final Map decodedData = json.decode(resp.body);
+    final Map? decodedData = json.decode(resp.body);
     final List<ProductModel> productos = [];
 
-    if(decodedData == '') return [];
+    if(decodedData == null) return [];
+
+    if(decodedData['error'] != null) return [];
 
     decodedData.forEach((id, prod) {
       final prodTemp = ProductModel.fromJson(prod);
       prodTemp.id = id;
       productos.add(prodTemp);
     });
-    print('listado Productos'+ productos.toString());
     return productos;
   }
 
   Future<int> borrarProducto(String id) async {
 
-    final url = '$_url/productos/$id.json';
+    final url = '$_url/productos/$id.json?auth=${_prefs.token}';
     final resp = await http.delete(Uri.parse(url));
 
     print(json.decode(resp.body));
@@ -78,13 +81,10 @@ class ProductProvider {
     final resp = await http.Response.fromStream(streamResponse);
 
     if(resp.statusCode != 200 && resp.statusCode != 201){
-      print('algo salió mal');
-      print(resp.body);
       return '';
     }
 
     final respData = json.decode(resp.body);
-    print(respData);
 
     return respData['secure_url'];
   }

@@ -1,35 +1,44 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:form_validation/bloc/provider.dart';
 import 'package:form_validation/models/product_model.dart';
-import 'package:form_validation/providers/products_provider.dart';
 
 class HomePage extends StatelessWidget {
 
-  final productosProvider = ProductProvider();
 
   @override
   Widget build(BuildContext context) {
+    
+    final productsBloc = Provider.productsBloc(context);
+    productsBloc.cargarProductos();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Inicio')
+        title: Text('Inicio'),
+        actions: [
+          IconButton(
+              onPressed: () => Navigator.restorablePushNamed(context, 'login'),
+              icon: Icon(Icons.exit_to_app)
+          )
+        ],
       ),
-      body: _crearListado(),
+      body: _crearListado(productsBloc),
       floatingActionButton: _crearBoton(context),
     );
   }
 
-  Widget _crearListado() {
-    return FutureBuilder(
-      future: productosProvider.cargarProductos(),
-      builder: (BuildContext context, AsyncSnapshot<List<ProductModel>> snapshot) {
+  Widget _crearListado(ProductsBloc productsBloc) {
+
+    return StreamBuilder(
+      stream: productsBloc.productsStream,
+      builder: (BuildContext context, AsyncSnapshot<List<ProductModel>> snapshot){
         if(snapshot.hasData){
 
           final productos = snapshot.data;
           print('productos home' + productos.toString());
           return ListView.builder(
-            itemCount: productos?.length,
-            itemBuilder: (context, i) => _crearItem(context, productos![i])
+              itemCount: productos?.length,
+              itemBuilder: (context, i) => _crearItem(context, productsBloc, productos![i])
           );
         } else {
           return Center(
@@ -40,7 +49,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _crearItem(BuildContext context, ProductModel producto){
+  Widget _crearItem(BuildContext context, ProductsBloc productsBloc, ProductModel producto){
     return Dismissible(
       key: UniqueKey(),
       background: Container(
@@ -48,7 +57,7 @@ class HomePage extends StatelessWidget {
       ),
       onDismissed: (direccion){
         // Borrar producto
-        productosProvider.borrarProducto(producto.id);
+        productsBloc.borrarProducto(producto.id);
       },
       child: Card(
         child: Column(

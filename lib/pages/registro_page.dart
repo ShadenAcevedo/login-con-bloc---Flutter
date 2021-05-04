@@ -3,10 +3,9 @@ import 'package:form_validation/bloc/provider.dart';
 import 'package:form_validation/providers/user_provider.dart';
 import 'package:form_validation/utils/utils.dart';
 
-class LoginPage extends StatelessWidget {
+class RegisterPage extends StatelessWidget {
 
   final userProvider = UserProvider();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,7 +100,7 @@ class LoginPage extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Text('Ingrese', style: TextStyle(fontSize: 20)),
+                Text('Crear Cuenta', style: TextStyle(fontSize: 20)),
                 SizedBox(height: 60),
                 _crearCorreo(bloc),
                 SizedBox(height: 20),
@@ -112,8 +111,8 @@ class LoginPage extends StatelessWidget {
             ),
           ),
           TextButton(
-              onPressed: () => Navigator.pushReplacementNamed(context, 'register'),
-              child: Text('Crear una nueva cuenta')
+              onPressed: () => Navigator.pushReplacementNamed(context, 'login'),
+              child: Text('¿Ya tienes cuenta? Ir a Login')
           ),
           SizedBox(height: 100)
         ],
@@ -196,14 +195,14 @@ class LoginPage extends StatelessWidget {
               child: Text('Ingresar'),
             ),
             style: ElevatedButton.styleFrom(primary: Colors.deepPurple,elevation: 0.0),
-            onPressed: snapshot.hasData ? () => _login(context, bloc) : null
+            onPressed: snapshot.hasData ? () => _register(context, bloc) : null
         );
       }
     );
   }
 
-  _login(BuildContext context, LoginBloc bloc) async{
-    final info = await userProvider.login(bloc.correo, bloc.contrasena);
+  _register(BuildContext context, LoginBloc bloc) async{
+    final info = await userProvider.nuevoUsuario(bloc.correo, bloc.contrasena);
     if(info['ok']){
       Navigator.pushReplacementNamed(context, 'home');
     } else {
